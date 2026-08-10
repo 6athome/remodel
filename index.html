@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>6at.home</title>
+<style>
+  :root{
+    --burgundy:#6d1f2c;
+    --burgundy-deep:#4a1420;
+    --walnut:#5a4230;
+    --walnut-light:#8a6a4a;
+    --cream:#f2ebe0;
+    --paper:#fbf7f0;
+    --ink:#2b2320;
+    --line:#d8cabb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Dotum','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px;}
+  header{margin-bottom:40px;}
+  .eyebrow{
+    font-family:'Courier New',monospace;
+    letter-spacing:.18em;
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--burgundy);
+    margin-bottom:10px;
+  }
+  h1{font-size:38px;margin:0 0 8px;font-weight:400;letter-spacing:-.01em;}
+  h1 em{color:var(--burgundy);font-style:normal;}
+  .sub{font-family:Arial,sans-serif;font-size:14px;color:#6b5a4a;line-height:1.6;max-width:540px;}
+  .hint{font-family:Arial,sans-serif;font-size:12px;color:var(--walnut-light);margin-top:18px;}
+  .stage{display:grid;grid-template-columns:1.4fr 1fr;gap:36px;align-items:start;}
+  @media(max-width:820px){.stage{grid-template-columns:1fr;}}
+
+  .plan-card{background:var(--paper);border:1px solid var(--line);padding:20px;position:relative;}
+  svg{width:100%;height:auto;display:block;}
+  .room{fill:var(--paper);stroke:var(--walnut);stroke-width:1.6;cursor:pointer;transition:fill .25s ease, stroke .25s ease;}
+  .room:hover,.room.active{fill:#ecd9d9;stroke:var(--burgundy);}
+  .room-label{font-family:Arial,sans-serif;font-size:12px;fill:var(--walnut);pointer-events:none;letter-spacing:.01em;}
+  .room-sub{font-family:Arial,sans-serif;font-size:9.5px;fill:var(--walnut-light);pointer-events:none;}
+  .room-label.active,.room-sub.active{fill:var(--burgundy-deep);font-weight:bold;}
+  .wall{fill:none;stroke:var(--ink);stroke-width:3;}
+
+  .panel{background:var(--burgundy-deep);color:var(--cream);padding:28px 26px;min-height:380px;position:relative;overflow:hidden;}
+  .panel::before{content:"";position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at top right, var(--burgundy), transparent 70%);opacity:.6;pointer-events:none;}
+  .render{margin:-28px -26px 20px;height:190px;position:relative;overflow:hidden;background:#3a1017;}
+  .render img{width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.12) saturate(1.08) brightness(.94);opacity:0;transition:opacity .4s ease;}
+  .render img.on{opacity:1;}
+  .render::after{content:"";position:absolute;inset:0;background:linear-gradient(to top, var(--burgundy-deep) 0%, transparent 55%);}
+  .render .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-size:11px;color:#a97c81;letter-spacing:.05em;}
+  .panel .ep{font-family:'Courier New',monospace;font-size:11px;letter-spacing:.15em;color:#d9a9ac;text-transform:uppercase;position:relative;z-index:1;}
+  .panel h2{font-size:26px;margin:6px 0 14px;font-weight:400;position:relative;z-index:1;}
+  .panel p{font-family:Arial,sans-serif;font-size:13.5px;line-height:1.7;color:#e9ddd1;margin:0 0 18px;position:relative;z-index:1;}
+  .mat-list{list-style:none;padding:0;margin:0 0 20px;position:relative;z-index:1;}
+  .mat-list li{font-family:Arial,sans-serif;font-size:13px;padding:10px 0;border-top:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;gap:12px;}
+  .mat-list li span:first-child{color:#f0e5d8;}
+  .mat-list li span:last-child{color:#c9a0a4;font-size:12px;text-align:right;}
+  .cta{display:inline-block;font-family:Arial,sans-serif;font-size:12px;letter-spacing:.05em;color:var(--burgundy-deep);background:var(--cream);padding:10px 18px;text-decoration:none;position:relative;z-index:1;}
+  .badge{display:inline-block;font-family:Arial,sans-serif;font-size:10.5px;color:#d9a9ac;border:1px solid rgba(217,169,172,.5);padding:3px 8px;margin-left:10px;letter-spacing:.02em;}
+  .empty{display:flex;flex-direction:column;justify-content:center;height:100%;min-height:320px;color:#c9b9ae;font-family:Arial,sans-serif;font-size:13px;}
+  .empty b{color:var(--cream);font-size:16px;font-weight:400;display:block;margin-bottom:8px;font-family:'Dotum','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;}
+
+  footer{margin-top:56px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:18px;font-family:Arial,sans-serif;font-size:12px;color:#8a7563;}
+
+  /* timeline */
+  .tl-section{margin-top:64px;}
+  .tl-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;flex-wrap:wrap;gap:14px;}
+  .tl-head h2{font-size:26px;font-weight:400;margin:0;}
+  .tl-legend{display:flex;gap:14px;flex-wrap:wrap;font-family:Arial,sans-serif;font-size:11px;color:#7a6a5a;}
+  .tl-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .tl-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+  .timeline{position:relative;margin-top:28px;padding-left:54px;}
+  .timeline::before{content:"";position:absolute;left:19px;top:6px;bottom:6px;width:1px;background:var(--line);}
+
+  .tl-item{position:relative;padding:14px 18px 14px 20px;margin-bottom:2px;cursor:default;border:1px solid transparent;transition:background .2s ease, border-color .2s ease;}
+  .tl-item[data-room]{cursor:pointer;}
+  .tl-item[data-room]:hover, .tl-item.active{background:var(--paper);border-color:var(--line);}
+  .tl-dot{position:absolute;left:-40px;top:18px;width:10px;height:10px;border-radius:50%;border:2px solid var(--cream);box-shadow:0 0 0 1px var(--line);}
+  .tl-num{font-family:'Courier New',monospace;font-size:11px;color:var(--walnut-light);letter-spacing:.1em;}
+  .tl-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .tl-title{font-size:17px;}
+  .tl-tone{font-family:Arial,sans-serif;font-size:10.5px;color:#8a7563;letter-spacing:.03em;}
+  .tl-desc{font-family:Arial,sans-serif;font-size:12.5px;color:#7a6a5a;line-height:1.6;margin-top:5px;max-width:640px;}
+  .tl-item.final{margin-top:14px;padding-top:20px;border-top:1px solid var(--line);}
+  .tl-item.final .tl-title{font-size:21px;color:var(--burgundy-deep);}
+  .tl-jump{font-family:Arial,sans-serif;font-size:11px;color:var(--burgundy);margin-top:4px;}
+
+  /* media kit */
+  .mk-section{margin-top:80px;background:var(--burgundy-deep);color:var(--cream);padding:48px 40px;position:relative;overflow:hidden;}
+  .mk-section::before{content:"";position:absolute;bottom:-60px;left:-60px;width:220px;height:220px;background:radial-gradient(circle, var(--burgundy), transparent 70%);opacity:.5;}
+  .mk-eyebrow{font-family:'Courier New',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#d9a9ac;margin-bottom:10px;position:relative;z-index:1;}
+  .mk-head{font-size:28px;font-weight:400;margin:0 0 16px;position:relative;z-index:1;}
+  .mk-bio{font-family:Arial,sans-serif;font-size:13.5px;line-height:1.75;color:#e9ddd1;max-width:560px;margin:0 0 32px;position:relative;z-index:1;}
+  .mk-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:rgba(255,255,255,.15);margin-bottom:32px;position:relative;z-index:1;}
+  .mk-stat{background:var(--burgundy-deep);padding:18px 16px;}
+  .mk-stat .num{font-family:'Dotum','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:24px;color:var(--cream);display:block;}
+  .mk-stat .label{font-family:Arial,sans-serif;font-size:11px;color:#c9a0a4;letter-spacing:.03em;margin-top:4px;display:block;}
+  .mk-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;position:relative;z-index:1;}
+  .mk-contact{font-family:Arial,sans-serif;font-size:13px;color:#e9ddd1;}
+  .mk-contact b{color:var(--cream);font-family:'Dotum','Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-weight:400;font-size:15px;display:block;margin-bottom:2px;}
+  .mk-cta{font-family:Arial,sans-serif;font-size:12px;letter-spacing:.05em;color:var(--burgundy-deep);background:var(--cream);padding:12px 22px;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">서초 · 25PY · REMODELING JOURNAL</div>
+    <h1>6at<em>.</em>home</h1>
+    <div class="sub">20년차 구축빌라를 버건디×월넛으로 다시 짓는 기록. 실제 도면을 기반으로 그렸어요 — 공간을 클릭하면 자재와 3D 제안 디테일이 떠요.</div>
+    <div class="hint">↳ 평면도의 공간을 눌러보세요</div>
+  </header>
+
+  <div class="stage">
+    <div class="plan-card">
+      <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
+        <rect class="wall" x="36" y="36" width="828" height="352" rx="2"/>
+
+        <!-- 옷방 (top-left, diagonal pattern room) -->
+        <rect class="room" data-room="closet" x="40" y="40" width="258" height="176"/>
+        <text class="room-label" data-label="closet" x="52" y="60">옷방</text>
+        <text class="room-sub" data-label="closet" x="52" y="74">폴딩도어</text>
+
+        <!-- 비밀 화장실 -->
+        <rect class="room" data-room="secretbath" x="302" y="40" width="86" height="176"/>
+        <text class="room-label" data-label="secretbath" x="308" y="60" style="font-size:10.5px;">비밀</text>
+        <text class="room-sub" data-label="secretbath" x="308" y="74">화장실</text>
+
+        <!-- 현관 (화장실과 화장실 사이) -->
+        <rect class="room" data-room="entry" x="388" y="40" width="64" height="176"/>
+        <text class="room-label" data-label="entry" x="393" y="60" style="font-size:10px;">현관</text>
+
+        <!-- 안방화장실 -->
+        <rect class="room" data-room="mainbath" x="452" y="40" width="86" height="176"/>
+        <text class="room-label" data-label="mainbath" x="458" y="60" style="font-size:10.5px;">안방</text>
+        <text class="room-sub" data-label="mainbath" x="458" y="74">화장실</text>
+
+        <!-- 안방 (더블침대) -->
+        <rect class="room" data-room="bedroom" x="542" y="40" width="252" height="176"/>
+        <text class="room-label" data-label="bedroom" x="554" y="60">안방</text>
+        <text class="room-sub" data-label="bedroom" x="554" y="74">더블침대</text>
+
+        <!-- 베란다 (far right) -->
+        <rect class="room" data-room="veranda" x="798" y="40" width="66" height="176"/>
+        <text class="room-label" data-label="veranda" x="804" y="60" style="font-size:10.5px;">베란다</text>
+
+        <!-- 서재 (bottom-left) -->
+        <rect class="room" data-room="study" x="40" y="220" width="200" height="168"/>
+        <text class="room-label" data-label="study" x="52" y="240">서재</text>
+        <text class="room-sub" data-label="study" x="52" y="254">다이닝 코너</text>
+
+        <!-- 주방 -->
+        <rect class="room" data-room="kitchen" x="244" y="220" width="270" height="168"/>
+        <text class="room-label" data-label="kitchen" x="256" y="240">주방</text>
+
+        <!-- 거실/다이닝 -->
+        <rect class="room" data-room="living" x="518" y="220" width="346" height="168"/>
+        <text class="room-label" data-label="living" x="530" y="240">거실 · 식탁</text>
+      </svg>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="empty">
+        <b>어느 공간이 궁금하세요?</b>
+        평면도에서 방을 클릭하면<br>실제 3D 제안 자재 정보가 떠요.
+      </div>
+    </div>
+  </div>
+
+  <div class="tl-section">
+    <div class="tl-head">
+      <h2>릴스 15편 타임라인</h2>
+      <div class="tl-legend">
+        <span><i style="background:#c9a15a"></i>감성</span>
+        <span><i style="background:#c9703f"></i>웃김</span>
+        <span><i style="background:#6d1f2c"></i>반전</span>
+        <span><i style="background:#5a4230"></i>정보</span>
+        <span><i style="background:#9c8a76"></i>공정기록</span>
+      </div>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <div class="mk-section">
+    <div class="mk-eyebrow">Media Kit</div>
+    <h2 class="mk-head">6at.home</h2>
+    <p class="mk-bio">서초 20년차 25평 구축빌라를 버건디×월넛 톤으로 리모델링하는 과정을 기록하는 계정. 상담부터 철거, 공정, 비포애프터까지 15편의 릴스로 전 과정을 담았습니다.</p>
+    <div class="mk-stats">
+      <div class="mk-stat"><span class="num">25py</span><span class="label">시공 면적</span></div>
+      <div class="mk-stat"><span class="num">15</span><span class="label">기획 릴스 편수</span></div>
+      <div class="mk-stat"><span class="num">3mo</span><span class="label">팔로워 1만 목표 기간</span></div>
+      <div class="mk-stat"><span class="num">버건디×월넛</span><span class="label">컨셉 컬러</span></div>
+    </div>
+    <div class="mk-foot">
+      <div class="mk-contact">
+        <b>협업 문의</b>
+        6athome@google.com
+      </div>
+      <a class="mk-cta" href="mailto:6athome@google.com">문의 메일 보내기 →</a>
+    </div>
+  </div>
+
+  <footer>
+    <span>6at.home — remodeling journal</span>
+    <span>ep.01 – ep.15</span>
+  </footer>
+</div>
+
+<script>
+const EPISODES = [
+  {n:1, title:"인테리어 상담", tone:"감성", room:null, desc:"디자이너와의 첫 상담. 무드보드와 자재 샘플을 소개한다."},
+  {n:2, title:"안방화장실 좁은 공간 정보", tone:"웃김", room:"mainbath", desc:"실제 면적과 콤팩트 변기·샤워부스 시공안을 공유한다."},
+  {n:3, title:"POV: 곰팡이 발견", tone:"반전", room:null, desc:"시공 현장 방문 중 발견한 곰팡이를 기록한다."},
+  {n:4, title:"마모륨 베를린레드 답사", tone:"정보", room:null, desc:"버건디 톤 바닥재를 찾아본 답사 기록."},
+  {n:5, title:"강마루 vs 마모륨 결정", tone:"정보", room:"living", desc:"바닥재 선택 기준과 최종 결정 과정을 정리한다."},
+  {n:6, title:"유리블럭 & 타일 선정", tone:"정보", room:"kitchen", desc:"현관 옆 시야를 가리는 유리블럭과 타일 소재를 소개한다."},
+  {n:7, title:"공사 전 주민 안내문", tone:"정보", room:"entry", desc:"공사 전 이웃에게 전달한 안내문 내용을 공유한다."},
+  {n:8, title:"반셀프 시공 공정표", tone:"정보", room:null, desc:"25평 반셀프 시공 공정 일정표를 정리한다."},
+  {n:9, title:"철거", tone:"공정기록", room:null, desc:"철거 공정을 기록한다."},
+  {n:10, title:"전기공사 · 목공", tone:"공정기록", room:null, desc:"전기·목공 공정 순서와 유의사항을 정리한다."},
+  {n:11, title:"옷방 좁은 공간 정보", tone:"웃김", room:"closet", desc:"옷방 면적과 폴딩도어 수납 구조를 소개한다."},
+  {n:12, title:"타일공사 · 비밀 화장실 공개", tone:"반전", room:"secretbath", desc:"현관 옆 거울문과 테라코타 화장실 구조를 공개한다."},
+  {n:13, title:"도배", tone:"공정기록", room:"study", desc:"서재 포인트레드 벽지 시공 결과를 기록한다."},
+  {n:14, title:"가구", tone:"공정기록", room:"bedroom", desc:"월넛 가구 배치가 완료된 상태를 기록한다."},
+  {n:15, title:"비포애프터 최종 공개", tone:"공개", room:null, desc:"리모델링 전후를 비교해 공개한다."},
+];
+
+const TONE_COLOR = {감성:"#c9a15a", 웃김:"#c9703f", 반전:"#6d1f2c", 정보:"#5a4230", 공정기록:"#9c8a76", 공개:"#6d1f2c"};
+
+const tlRoot = document.getElementById('timeline');
+tlRoot.innerHTML = EPISODES.map(e => `
+  <div class="tl-item${e.n===15?' final':''}" ${e.room?`data-room="${e.room}"`:''} data-ep="${e.n}">
+    <span class="tl-dot" style="background:${TONE_COLOR[e.tone]}"></span>
+    <div class="tl-row">
+      <span class="tl-num">EP.${String(e.n).padStart(2,'0')}</span>
+      <span class="tl-title">${e.title}</span>
+      <span class="tl-tone">${e.tone}</span>
+    </div>
+    ${e.room ? '<div class="tl-jump">평면도에서 이 공간 보기 →</div>' : ''}
+  </div>
+`).join('');
+
+tlRoot.addEventListener('click', (e)=>{
+  const item = e.target.closest('.tl-item');
+  if(!item || !item.dataset.room) return;
+  document.querySelectorAll('.tl-item').forEach(i=>i.classList.toggle('active', i===item));
+  render(item.dataset.room);
+  document.querySelector('.plan-card').scrollIntoView({behavior:'smooth', block:'center'});
+});
+
+const DATA = {
+  closet: {
+    ep: "EP.11",
+    title: "옷방",
+    tag: "폴딩도어",
+    img: "closet.jpg",
+    desc: "코너가 애매하게 좁아 기성 가구 대신 스틸그레이 폴딩도어로 짰어요. 문틀은 우드톤으로 맞춰서 현관 쪽 테라코타 바닥과 자연스럽게 이어져요.",
+    materials: [["도어","스틸그레이 폴딩도어"],["문틀","우드톤 마감"],["바닥 연계","테라코타 타일(현관 방향)"]],
+  },
+  secretbath: {
+    ep: "EP.12",
+    title: "비밀 화장실",
+    tag: "구조 반전",
+    img: "secretbath.jpg",
+    desc: "현관 옆 거울, 사실은 문이었어요. 열면 붉은 테라코타 타일 화장실이 나와요. 버건디랑은 또 다른 레드예요.",
+    materials: [["벽 타일","붉은 테라코타"],["바닥 타일","블랙 무광"],["수전","블랙 샤워 세트"],["수납장","우드 오픈 선반"]],
+  },
+  mainbath: {
+    ep: "EP.02",
+    title: "안방 화장실",
+    tag: "콤팩트",
+    img: "mainbath.jpg",
+    desc: "원래 정말 좁은 공간이라 콤팩트 변기 세트와 블랙 무광 바닥타일로 정리했어요. 상부는 라이트 그레이 타일에 블랙 라인 포인트, 블랙 타월바로 톤을 맞췄어요.",
+    materials: [["바닥 타일","블랙 무광"],["벽 타일","라이트 그레이 + 블랙 라인"],["도기","콤팩트 세면대·양변기"],["액세서리","블랙 타월바"]],
+  },
+  bedroom: {
+    ep: "EP.14",
+    title: "안방",
+    tag: "월넛 헤드보드",
+    img: "bedroom.jpg",
+    desc: "월넛 원목 헤드보드가 벽 전체를 채우는 구조. 라탄 펜던트 조명과 화이트+베이지 톤 침구로 무게감을 덜었어요. 옆으로는 슬라이딩 커튼형 파티션.",
+    materials: [["가구","월넛 헤드보드 침대"],["조명","라탄 펜던트"],["침구","화이트·베이지 톤"],["파티션","슬라이딩 커튼형"]],
+  },
+  entry: {
+    ep: "EP.07",
+    title: "현관",
+    tag: "커튼박스(LED)",
+    desc: "두 화장실 사이, 집의 중심 동선에 자리한 현관. 우드 프레임 도어, 붉은 테라코타 바닥, 신발장 포인트박스로 마감했어요.",
+    materials: [["바닥","붉은 테라코타 타일"],["도어 프레임","우드 마감"],["조명","커튼박스 매립 LED"]],
+  },
+  veranda: {
+    ep: "예정",
+    title: "베란다",
+    tag: "확장 검토",
+    desc: "안방 옆으로 이어지는 베란다. 아직 시공 계획은 정리 전이에요.",
+    materials: [["현재 상태","시공 전"]],
+  },
+  study: {
+    ep: "EP.13",
+    title: "서재",
+    tag: "다이닝 코너",
+    img: "study.jpg",
+    desc: "원형 우드 테이블과 라탄 펜던트 조명을 둔 작은 다이닝 겸 서재 코너. 정수기를 붙박이로 넣어 동선을 줄였어요. 폴딩도어 너머로 옷방이 바로 보여요.",
+    materials: [["테이블","우드 원형 테이블"],["조명","라운드 펜던트"],["가전","정수기(붙박이)"]],
+  },
+  kitchen: {
+    ep: "EP.06",
+    title: "주방",
+    tag: "타일 상부장",
+    img: "kitchen.jpg",
+    desc: "우드톤 하부장에 버건디 딥레드 3단 서랍으로 포인트. 상부는 타일 마감에 와인·오브제를 두는 오픈 선반, 안전기 위치까지 LED바 상단에 맞춰 정리했어요.",
+    materials: [["하부장","우드톤"],["포인트 서랍","버건디 딥레드 3단"],["상부","타일 + 오픈 선반"],["조명","LED바(안전기 라인 상단)"]],
+  },
+  living: {
+    ep: "EP.05",
+    title: "거실 · 식탁",
+    tag: "유리블럭",
+    img: "living.jpg",
+    desc: "우드 원형 식탁 옆으로 유리블럭 파티션을 세워 시선은 가리되 빛은 통과시켰어요. 커튼박스 상시매립 LED로 은은한 무드등 라인을 넣었어요.",
+    materials: [["파티션","유리블럭"],["바닥재","강마루(월넛 계열)"],["조명","커튼박스 상시매립 LED"],["가구","우드 원형 식탁"]],
+  },
+};
+
+const svg = document.querySelector('svg');
+const panel = document.getElementById('panel');
+
+function render(key){
+  const d = DATA[key];
+  document.querySelectorAll('.room').forEach(r=>r.classList.toggle('active', r.dataset.room===key));
+  document.querySelectorAll('.room-label,.room-sub').forEach(l=>l.classList.toggle('active', l.dataset.label===key));
+
+  const mats = d.materials.map(([a,b])=>`<li><span>${a}</span><span>${b}</span></li>`).join('');
+  const renderBlock = d.img
+    ? `<div class="render"><img id="renderImg" src="${d.img}" alt="${d.title} 3D 제안"></div>`
+    : `<div class="render"><div class="noimg">3D 제안 렌더링 준비 중</div></div>`;
+  panel.innerHTML = `
+    ${renderBlock}
+    <div class="ep">${d.ep}<span class="badge">${d.tag}</span></div>
+    <h2>${d.title}</h2>
+    <p>${d.desc}</p>
+    <ul class="mat-list">${mats}</ul>
+    <a class="cta" href="#">이 공간 자재 보러가기 →</a>
+  `;
+  const img = document.getElementById('renderImg');
+  if(img){
+    if(img.complete) img.classList.add('on');
+    else img.addEventListener('load', ()=>img.classList.add('on'));
+  }
+}
+
+svg.addEventListener('click', (e)=>{
+  const room = e.target.dataset.room || e.target.dataset.label;
+  if(room) render(room);
+});
+</script>
+</body>
+</html>
